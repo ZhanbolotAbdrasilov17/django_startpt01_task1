@@ -5,17 +5,25 @@
     <title>Мои задачи</title>
 </head>
 <body>
-<h1>Мои задачи</h1>
-    {% for task in tasks %}
+    <h1>Мои задачи</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Добавить</button>
+    </form>
+    <ul>
+        {% for task in tasks %}
             <li>
                 {% if task.is_completed %}
                     <s>{{ task.title }}</s>
                 {% else %}
-                        {{ task.title }}
+                    {{ task.title }}
                 {% endif %}
             </li>
-    {% empty %}
-        <li>Нет задач</li>
-    {% endfor %}
+        {% empty %}
+            <li>Нет задач</li>
+        {% endfor %}
+    </ul>
+
 </body>
 </html>
