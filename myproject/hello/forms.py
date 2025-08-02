@@ -5,6 +5,8 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = ['title']
-        widgets = {
-            'title': forms.TextInput(attrs={'placeholder': 'Введите задачу'})
-        }
+
+class EditTaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['title']
