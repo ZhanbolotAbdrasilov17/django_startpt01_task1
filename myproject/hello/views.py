@@ -1,3 +1,5 @@
+from re import search
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Task
@@ -8,7 +10,11 @@ from django.contrib.auth import login
 
 @login_required
 def home(request):
+    search_query = request.GET.get('q', '')
     tasks = Task.objects.filter(user=request.user)
+
+    if search_query:
+        tasks = tasks.filter(title__icontains=search_query)
 
     if request.method == 'POST':
         form = TaskForm(request.POST)
