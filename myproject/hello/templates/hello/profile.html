@@ -1,0 +1,40 @@
+{% extends 'hello/base.html' %}
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<h1>Личный кабинет</h1>
+<p>Пользователь: <strong>{{ request.user.username }}</strong></p>
+<p>Последний вход: {{ request.user.last_login }}</p>
+
+<hr>
+<h3>Статистика задач</h3>
+<ul>
+    <li>Всего задач: {{ total_tasks }}</li>
+    <li>Выполненные: {{ completed_tasks }}</li>
+    <li>Невыполненные: {{ uncompleted_tasks }}</li>
+</ul>
+
+<hr>
+<h3>График активности (за последние 7 дней)</h3>
+<canvas id="activityChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('activityChart');
+    const activityData = {{ activity|safe }};
+    const labels = activityData.map(item => item.day);
+    const counts = activityData.map(item => item.count);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Создано задач',
+                data: counts,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            }]
+        }
+    });
+</script>
+{% endblock %}

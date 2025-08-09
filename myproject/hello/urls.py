@@ -1,4 +1,6 @@
 from django.urls import path
+from setuptools.extern import names
+
 from . import views
 
 urlpatterns = [
@@ -8,4 +10,5 @@ urlpatterns = [
     path('delete/<int:task_id>/', views.delete_task, name='delete_task'),
     path('edit/<int:task_id>/', views.edit_task, name='edit_task'),
     path('filter/<str:status>/', views.filter_tasks, name='filter_tasks'),
+    path('profile/', views.profile, name='profile'),
 ]

@@ -1,3 +1,4 @@
+from itertools import count
 from re import search
 
 from django.contrib.auth.decorators import login_required
@@ -6,7 +7,10 @@ from .models import Task
 from .forms import TaskForm, EditTaskForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
-
+from django.db.models import Count
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import TruncDate
 
 @login_required
 def home(request):
@@ -86,3 +90,27 @@ def filter_tasks(request, status):
 
     form = TaskForm()
     return render(request, 'hello/index.html', {'tasks': tasks, 'form': form, 'filter': status})
+
+@login_required
+def profile(request):
+    tasks = Task.objects.filter(user=request.user)
+
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(is_completed=True).count()
+    uncompleted_tasks = total_tasks - completed_tasks
+
+    last_week = timezone.now() - timedelta(days=6)
+    activity = (
+        tasks.filter(created_at__gte=last_week)
+        .annotate(day=TruncDate('created_at'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+
+    return render(request, 'hello/profile.html', {
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'uncompleted_tasks': uncompleted_tasks,
+        'activity': list(activity),
+    })
