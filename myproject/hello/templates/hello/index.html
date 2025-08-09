@@ -21,6 +21,13 @@
     </div>
 </form>
 
+<div class="mb-3">
+    <a href="?sort=date_new" class="btn btn-outline-primary btn-sm">Новые сначала</a>
+    <a href="?sort=date_old" class="btn btn-outline-primary btn-sm">Старые сначала</a>
+    <a href="?sort=completed" class="btn btn-outline-success btn-sm">Выполненные</a>
+    <a href="?sort=not_completed" class="btn btn-outline-warning btn-sm">Невыполненные</a>
+</div>
+
 <!-- Список задач -->
 <div class="row">
     {% for task in tasks %}

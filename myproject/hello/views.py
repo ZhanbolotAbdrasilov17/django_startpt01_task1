@@ -11,10 +11,20 @@ from django.contrib.auth import login
 @login_required
 def home(request):
     search_query = request.GET.get('q', '')
+    sort_option = request.GET.get('sort', '')
     tasks = Task.objects.filter(user=request.user)
 
     if search_query:
         tasks = tasks.filter(title__icontains=search_query)
+
+    if sort_option == 'date_new':
+        tasks = tasks.order_by('-created_at')
+    elif sort_option == 'date_old':
+        tasks = tasks.order_by('created_at')
+    elif sort_option == 'completed':
+        tasks = tasks.order_by('-is_completed')
+    elif sort_option == 'not_completed':
+        tasks = tasks.order_by('is_completed')
 
     if request.method == 'POST':
         form = TaskForm(request.POST)
