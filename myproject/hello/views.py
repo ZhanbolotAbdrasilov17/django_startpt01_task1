@@ -13,6 +13,12 @@ from django.db.models import Count
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import TruncDate
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
 
 @login_required
 def home(request):
@@ -156,3 +162,43 @@ def export_tasks_excel(request):
     response["Content-Disposition"] = 'attachment; filename="tasks.xlsx"'
     wb.save(response)
     return response
+
+@login_required
+def export_tasks_pdf(request):
+    tasks = Task.objects.filter(user=request.user)
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Заголовок
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(200, height - 50, "Отчёт по задачам")
+
+    # Таблица данных
+    data = [["Название", "Выполнена", "Дата создания"]]
+    for task in tasks:
+        data.append([
+            task.title,
+            "Да" if task.is_completed else "Нет",
+            task.created_at.strftime("%Y-%m-%d %H:%M")
+        ])
+
+    table = Table(data, colWidths=[250, 100, 150])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#4CAF50")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+    ]))
+
+    table.wrapOn(p, width, height)
+    table.drawOn(p, 30, height - 200)
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type='application/pdf')
