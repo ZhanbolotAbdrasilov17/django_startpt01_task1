@@ -18,8 +18,15 @@
 <h3>График активности (за последние 7 дней)</h3>
 <canvas id="activityChart" width="400" height="200"></canvas>
 
+<hr>
+<h3>Выполненные vs Невыполненные</h3>
+<canvas id="pieChart" width="400" height="200"></canvas>
+<a href="{% url 'export_excel' %}" class="btn btn-succes">Скачать задачи в Excel</a>
+<!-- Подключаем Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+    // === График активности ===
     const ctx = document.getElementById('activityChart');
     const activityData = {{ activity|safe }};
     const labels = activityData.map(item => item.day);
@@ -36,5 +43,21 @@
             }]
         }
     });
+
+    // === Круговая диаграмма ===
+    const pieCtx = document.getElementById('pieChart');
+    const pieData = {{ pie_data|safe }};
+
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Выполненные', 'Невыполненные'],
+            datasets: [{
+                data: pieData,
+                backgroundColor: ['#4caf50', '#ff9800'],
+            }]
+        }
+    });
+
 </script>
 {% endblock %}

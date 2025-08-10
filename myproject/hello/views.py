@@ -1,6 +1,8 @@
 from itertools import count
 from re import search
-
+import json
+import openpyxl
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Task
@@ -91,6 +93,8 @@ def filter_tasks(request, status):
     form = TaskForm()
     return render(request, 'hello/index.html', {'tasks': tasks, 'form': form, 'filter': status})
 
+
+
 @login_required
 def profile(request):
     tasks = Task.objects.filter(user=request.user)
@@ -99,6 +103,7 @@ def profile(request):
     completed_tasks = tasks.filter(is_completed=True).count()
     uncompleted_tasks = total_tasks - completed_tasks
 
+    # Последние 7 дней
     last_week = timezone.now() - timedelta(days=6)
     activity = (
         tasks.filter(created_at__gte=last_week)
@@ -108,9 +113,46 @@ def profile(request):
         .order_by('day')
     )
 
-    return render(request, 'hello/profile.html', {
+    # Преобразуем даты в строки
+    activity_list = [
+        {"day": a["day"].strftime("%Y-%m-%d"), "count": a["count"]}
+        for a in activity
+    ]
+
+    # Данные для pie chart
+    pie_data = [completed_tasks, uncompleted_tasks]
+
+    context = {
         'total_tasks': total_tasks,
         'completed_tasks': completed_tasks,
         'uncompleted_tasks': uncompleted_tasks,
-        'activity': list(activity),
-    })
+        'activity': json.dumps(activity_list),
+        'pie_data': json.dumps(pie_data)
+    }
+
+    return render(request, 'hello/profile.html', context)
+
+@login_required
+def export_tasks_excel(request):
+    tasks = Task.objects.filter(user=request.user)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Задачи"
+
+    ws.append(['Название', 'Описание', 'Выполнена', 'Дата создания'])
+
+    for task  in tasks:
+        ws.append([
+            task.title,
+
+            "Да" if task.is_completed else "Нет",
+            task.created_at.strftime("%Y-%m-%d %H:%M"),
+        ])
+
+    response = HttpResponse(
+        content_type="applicetion/vnd.openxmlformats-officedocument.spreadsheet.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="tasks.xlsx"'
+    wb.save(response)
+    return response
